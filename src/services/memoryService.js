@@ -23,7 +23,7 @@ let memoryStore = {
 const initializeMemory = () => {
   // Try to load from localStorage if available
   try {
-    const savedMemory = localStorage.getItem('gemini_memory');
+    const savedMemory = localStorage.getItem('apployd_memory');
     if (savedMemory) {
       memoryStore = JSON.parse(savedMemory);
     }
@@ -42,7 +42,7 @@ const initializeMemory = () => {
 // Save memory to localStorage
 const saveMemoryToStorage = () => {
   try {
-    localStorage.setItem('gemini_memory', JSON.stringify(memoryStore));
+    localStorage.setItem('apployd_memory', JSON.stringify(memoryStore));
   } catch (error) {
     console.error('Error saving memory to storage:', error);
   }
@@ -126,8 +126,8 @@ const addMessageToConversation = (message) => {
     analyzeMessageForContext(message.text);
   }
 
-  // If it's a response from Gemini, analyze for consistency tracking
-  if (message.sender === 'gemini') {
+  // If it's a response from Apployd, analyze for consistency tracking
+  if (message.sender === 'apployd') {
     trackResponseConsistency(message.text);
   }
 

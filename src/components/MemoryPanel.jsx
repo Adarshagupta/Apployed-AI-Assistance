@@ -4,6 +4,7 @@ import {
   getMemoriesByType,
   searchMemories,
   deleteMemory,
+  resetMemory,
   MEMORY_TYPES
 } from '../services/memoryService';
 
@@ -57,6 +58,14 @@ const MemoryPanel = () => {
     }
   };
 
+  // Handle resetting all memories
+  const handleResetMemories = () => {
+    if (window.confirm('Are you sure you want to reset all memories? This cannot be undone.')) {
+      resetMemory();
+      loadMemories();
+    }
+  };
+
   // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -102,7 +111,7 @@ const MemoryPanel = () => {
       {isOpen && (
         <div className="memory-panel-content">
           <div className="memory-panel-header">
-            <h3>Gemini's Memory</h3>
+            <h3>Apployd's Memory</h3>
             <div className="memory-search">
               <input
                 type="text"
@@ -111,6 +120,13 @@ const MemoryPanel = () => {
                 onChange={handleSearch}
               />
             </div>
+            <button
+              className="memory-reset-button"
+              onClick={handleResetMemories}
+              title="Reset all memories"
+            >
+              Reset All Memories
+            </button>
           </div>
 
           <div className="memory-filters">
@@ -145,7 +161,7 @@ const MemoryPanel = () => {
               <div className="no-memories">
                 {searchQuery
                   ? `No memories found for "${searchQuery}"`
-                  : 'No memories stored yet. Apploydwill remember important information as you chat.'}
+                  : 'No memories stored yet. Apployd will remember important information as you chat.'}
               </div>
             ) : (
               memories.map(memory => (

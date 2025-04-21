@@ -79,7 +79,7 @@ export const generateChatResponse = async (prompt, history = []) => {
       // Store the response in memory
       addMessageToConversation({
         text: responseText,
-        sender: 'gemini',
+        sender: 'apployd',
         timestamp: new Date().toISOString()
       });
 
@@ -133,7 +133,7 @@ export const generateChatResponse = async (prompt, history = []) => {
     // Store the response in memory
     addMessageToConversation({
       text: responseText,
-      sender: 'gemini',
+      sender: 'apployd',
       timestamp: new Date().toISOString()
     });
 
@@ -230,7 +230,7 @@ export async function* streamChatResponse(prompt, history = []) {
     // Store the final response in memory
     addMessageToConversation({
       text: text,
-      sender: 'gemini',
+      sender: 'apployd',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -332,7 +332,7 @@ export const processImageWithGemini = async (imageFile, prompt) => {
     // Store the response in memory
     addMessageToConversation({
       text: responseText,
-      sender: 'gemini',
+      sender: 'apployd',
       timestamp: new Date().toISOString()
     });
 
@@ -443,10 +443,39 @@ export const detectUncertainty = (text) => {
   return uncertaintyPatterns.some(pattern => pattern.test(text));
 };
 
+// Function to generate content for the document editor
+export const generateContent = async (prompt) => {
+  try {
+    // Use a simplified approach for document content generation
+    const result = await model.generateContent({
+      contents: [
+        { role: 'user', parts: [{ text: prompt }] }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        topP: 0.95,
+        topK: 64,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      ],
+    });
+
+    return result.response.text();
+  } catch (error) {
+    console.error('Error generating content:', error);
+    throw error;
+  }
+};
+
 export default {
   generateChatResponse,
   parseImmersiveContent,
   streamChatResponse,
   processImageWithGemini,
-  detectUncertainty
+  detectUncertainty,
+  generateContent
 };

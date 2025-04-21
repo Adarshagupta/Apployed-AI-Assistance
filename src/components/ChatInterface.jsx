@@ -21,7 +21,7 @@ const formatSearchResults = (results) => {
   }).join('\n');
 };
 
-const ChatInterface = ({ onOpenSettings }) => {
+const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
   const [messages, setMessages] = useState([
     {
       id: 0,
@@ -883,7 +883,7 @@ const ChatInterface = ({ onOpenSettings }) => {
             </svg>
           </button>
         </div>
-        <Sidebar onOpenSettings={onOpenSettings} />
+        <Sidebar onOpenSettings={onOpenSettings} onOpenDocumentEditor={onOpenDocumentEditor} />
       </div>
 
       <div className="chat-container">

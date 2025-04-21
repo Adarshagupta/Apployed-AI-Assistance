@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import VoiceInput from './VoiceInput';
 
 const UserInput = ({ onSendMessage, isLoading }) => {
   const [message, setMessage] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -44,6 +46,10 @@ const UserInput = ({ onSendMessage, isLoading }) => {
     }
   };
 
+  const handleVoiceInput = (transcript) => {
+    setMessage(prev => prev + transcript);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="input-container">
       <div className="input-box">
@@ -52,10 +58,17 @@ const UserInput = ({ onSendMessage, isLoading }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Message Gemini..."
+          placeholder="Message Apployd..."
           className="input-field"
           rows={1}
           disabled={isLoading}
+        />
+
+        {/* Voice Input Button */}
+        <VoiceInput
+          onTranscript={handleVoiceInput}
+          isListening={isListening}
+          setIsListening={setIsListening}
         />
 
         {/* File Upload Button */}

@@ -3,11 +3,13 @@ import ChatInterface from './components/ChatInterface'
 import MemoryPanel from './components/MemoryPanel'
 import Settings from './components/Settings'
 import Preloader from './components/Preloader'
+import DocumentEditor from './components/DocumentEditor'
 import { initializeMemory } from './services/memoryService'
 
 function App() {
   // State to control settings visibility and loading state
   const [showSettings, setShowSettings] = useState(false);
+  const [showDocumentEditor, setShowDocumentEditor] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize memory system on app load
@@ -87,6 +89,11 @@ function App() {
     setShowSettings(prev => !prev);
   };
 
+  // Function to toggle document editor visibility
+  const toggleDocumentEditor = () => {
+    setShowDocumentEditor(prev => !prev);
+  };
+
   // Function to handle preloader completion
   const handleLoadComplete = () => {
     setIsLoading(false);
@@ -98,9 +105,13 @@ function App() {
         <Preloader onLoadComplete={handleLoadComplete} />
       ) : (
         <>
-          <ChatInterface onOpenSettings={toggleSettings} />
+          <ChatInterface
+            onOpenSettings={toggleSettings}
+            onOpenDocumentEditor={toggleDocumentEditor}
+          />
           <MemoryPanel />
           {showSettings && <Settings onClose={toggleSettings} />}
+          {showDocumentEditor && <DocumentEditor onClose={toggleDocumentEditor} />}
         </>
       )}
     </div>
