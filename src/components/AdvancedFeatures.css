@@ -1,0 +1,495 @@
+/* Advanced Features Styles */
+
+.advanced-features {
+  padding: 1rem;
+  background-color: var(--gemini-surface-elevated, rgba(31, 29, 43, 0.4));
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: var(--gemini-text, #ffffff);
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+}
+
+.advanced-features h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: var(--gemini-primary-light, #7c5dff);
+  font-weight: 500;
+}
+
+.advanced-features h4 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: var(--gemini-text, #030024);
+  font-weight: 500;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  color: var(--gemini-text-secondary, #a0a0c0);
+  font-size: 0.9rem;
+}
+
+.tab:hover {
+  background-color: rgba(124, 93, 255, 0.1);
+  color: var(--gemini-text, #ffffff);
+}
+
+.tab.active {
+  border-bottom-color: var(--gemini-primary-light, #7c5dff);
+  color: var(--gemini-primary-light, #7c5dff);
+  font-weight: 500;
+}
+
+/* Forms */
+.github-form,
+.database-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--gemini-text-secondary, #a0a0c0);
+}
+
+input {
+  padding: 0.5rem;
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: var(--gemini-surface, rgba(31, 29, 43, 0.6));
+  color: var(--gemini-text, #ffffff);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--gemini-primary-light, #7c5dff);
+  box-shadow: 0 0 0 2px rgba(124, 93, 255, 0.2);
+}
+
+.help-text {
+  font-size: 0.8rem;
+  color: var(--gemini-text-tertiary, #6e6e8f);
+  margin-top: 0.25rem;
+}
+
+.error-message {
+  color: #ff5252;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Buttons */
+.connect-button,
+.disconnect-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connect-button {
+  background-color: var(--gemini-primary, #7c5dff);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.connect-button:hover {
+  background-color: var(--gemini-primary-dark, #6a4fe0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.connect-button:disabled {
+  background-color: rgba(124, 93, 255, 0.3);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.disconnect-button {
+  background-color: rgba(31, 29, 43, 0.4);
+  color: #ff5252;
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+}
+
+.disconnect-button:hover {
+  background-color: rgba(31, 29, 43, 0.6);
+  transform: translateY(-1px);
+}
+
+.cancel-button {
+  padding: 0.5rem 1rem;
+  background-color: rgba(31, 29, 43, 0.4);
+  color: var(--gemini-text-secondary, #a0a0c0);
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: rgba(31, 29, 43, 0.6);
+  transform: translateY(-1px);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* GitHub Connected State */
+.github-connected {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.github-user-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--gemini-surface, rgba(31, 29, 43, 0.6));
+  border-radius: 8px;
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.github-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.github-user-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--gemini-text, #ffffff);
+}
+
+.github-user-info p strong {
+  color: var(--gemini-text-secondary, #a0a0c0);
+  font-weight: 500;
+}
+
+/* Password/Token Input */
+.token-input-container,
+.password-input-container {
+  display: flex;
+}
+
+.token-input-container input,
+.password-input-container input {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.toggle-token-visibility,
+.toggle-password-visibility {
+  padding: 0 0.5rem;
+  background-color: var(--gemini-surface-elevated, rgba(31, 29, 43, 0.4));
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-left: none;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  cursor: pointer;
+  color: var(--gemini-text-secondary, #a0a0c0);
+}
+
+.toggle-token-visibility:hover,
+.toggle-password-visibility:hover {
+  background-color: var(--gemini-surface, rgba(31, 29, 43, 0.6));
+  color: var(--gemini-text, #ffffff);
+}
+
+/* Usage Info */
+.github-usage-info,
+.database-usage-info {
+  background-color: var(--gemini-surface, rgba(31, 29, 43, 0.6));
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.github-usage-info ul,
+.database-usage-info ul {
+  padding-left: 1.5rem;
+  color: var(--gemini-text, #ffffff);
+}
+
+.github-usage-info li,
+.database-usage-info li {
+  margin-bottom: 0.5rem;
+}
+
+.github-usage-info code,
+.database-usage-info code {
+  background-color: rgba(124, 93, 255, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: monospace;
+  color: var(--gemini-primary-light, #7c5dff);
+  border: 1px solid rgba(124, 93, 255, 0.2);
+}
+
+.note {
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--gemini-text-tertiary, #6e6e8f);
+}
+
+/* Saved Connections */
+.saved-connections {
+  margin-top: 1.5rem;
+}
+
+.connections-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.connections-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background-color: var(--gemini-surface, rgba(31, 29, 43, 0.6));
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.connections-list li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.connections-list li.active {
+  border-color: var(--gemini-primary-light, #7c5dff);
+  background-color: rgba(124, 93, 255, 0.1);
+}
+
+.connection-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.connection-info strong {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: var(--gemini-text, #ffffff);
+}
+
+.connection-info span {
+  font-size: 0.8rem;
+  color: var(--gemini-text-secondary, #a0a0c0);
+}
+
+.connection-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.connection-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background-color: rgba(31, 29, 43, 0.4);
+  border: 1px solid var(--gemini-border, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--gemini-text-secondary, #a0a0c0);
+  transition: all 0.2s ease;
+}
+
+.connection-actions button:hover {
+  background-color: rgba(31, 29, 43, 0.6);
+  color: var(--gemini-text, #ffffff);
+  transform: translateY(-1px);
+}
+
+.connection-actions button:disabled {
+  color: var(--gemini-primary-light, #7c5dff);
+  font-weight: 500;
+  cursor: default;
+  background-color: rgba(124, 93, 255, 0.1);
+  border-color: rgba(124, 93, 255, 0.2);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .advanced-features {
+    padding: 0.75rem;
+  }
+
+  .advanced-features h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .advanced-features h4 {
+    font-size: 0.95rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .github-user-info {
+    flex-direction: column;
+    text-align: center;
+    padding: 0.75rem;
+  }
+
+  .github-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .connections-list li {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .connection-info {
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .connection-actions {
+    justify-content: center;
+  }
+
+  .github-usage-info,
+  .database-usage-info {
+    padding: 0.75rem;
+  }
+
+  .github-usage-info ul,
+  .database-usage-info ul {
+    padding-left: 1.25rem;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-bottom: 0.75rem;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .advanced-features {
+    padding: 0.5rem;
+  }
+
+  .advanced-features h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .advanced-features h4 {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  label {
+    font-size: 0.85rem;
+  }
+
+  input {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .help-text {
+    font-size: 0.75rem;
+  }
+
+  .connect-button,
+  .disconnect-button,
+  .cancel-button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .github-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .github-user-info p {
+    font-size: 0.85rem;
+  }
+
+  .connection-info strong {
+    font-size: 0.85rem;
+  }
+
+  .connection-info span {
+    font-size: 0.75rem;
+  }
+
+  .connection-actions button {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .github-usage-info code,
+  .database-usage-info code {
+    font-size: 0.8rem;
+  }
+}

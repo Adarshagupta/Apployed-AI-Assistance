@@ -1,0 +1,211 @@
+/* Accessibility CSS */
+
+/* Reduced Motion */
+.reduced-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-motion .logo-svg,
+.reduced-motion .logo-path,
+.reduced-motion .pulse-effect,
+.reduced-motion .preloader-title,
+.reduced-motion .loading-text {
+  animation: none !important;
+}
+
+.reduced-motion .new-chat-button,
+.reduced-motion .theme-option:hover,
+.reduced-motion .color-option:hover,
+.reduced-motion .settings-nav-item:hover,
+.reduced-motion .about-links a:hover,
+.reduced-motion .danger-button:hover,
+.reduced-motion .file-attachment:hover,
+.reduced-motion .feature-toggle:hover {
+  transform: none !important;
+}
+
+.reduced-motion .preloader.fade-out {
+  opacity: 0;
+  transition: opacity 0.1s linear !important;
+}
+
+/* High Contrast */
+.high-contrast {
+  --gemini-text: #ffffff;
+  --gemini-text-secondary: #d0d0e0;
+  --gemini-text-tertiary: #a0a0c0;
+  --gemini-border: rgba(255, 255, 255, 0.3);
+  --gemini-border-light: rgba(255, 255, 255, 0.2);
+}
+
+.high-contrast .message-group.ai {
+  background-color: rgba(31, 29, 43, 0.8);
+}
+
+.high-contrast .system-message {
+  background-color: rgba(31, 29, 43, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast .feature-toggle {
+  background-color: rgba(31, 29, 43, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast .feature-toggle.active {
+  border-color: var(--gemini-primary);
+  background-color: rgba(124, 93, 255, 0.3);
+}
+
+.high-contrast .settings-nav-item.active {
+  background-color: rgba(124, 93, 255, 0.3);
+}
+
+.high-contrast .toggle-switch label {
+  background-color: rgba(31, 29, 43, 0.8);
+}
+
+.high-contrast .toggle-switch input:checked + label {
+  background-color: rgba(124, 93, 255, 0.5);
+}
+
+.high-contrast .shortcut-item {
+  background-color: rgba(31, 29, 43, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast kbd {
+  background-color: rgba(31, 29, 43, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
+.high-contrast .shortcut-description {
+  color: #d0d0e0;
+}
+
+.high-contrast .setting-description {
+  color: #a0a0c0;
+}
+
+/* Theme-specific styles */
+[data-theme="light"] {
+  --gemini-background: #f8f9fc;
+  --gemini-surface: #ffffff;
+  --gemini-surface-elevated: #f0f2f8;
+  --gemini-text: #1a1a2e;
+  --gemini-text-secondary: #4a4a6a;
+  --gemini-text-tertiary: #6e6e8f;
+  --gemini-border: rgba(0, 0, 0, 0.1);
+  --gemini-border-light: rgba(0, 0, 0, 0.05);
+  --gemini-hover: rgba(124, 93, 255, 0.1);
+}
+
+[data-theme="light"] .message-group.ai {
+  background-color: rgba(240, 242, 248, 0.8);
+}
+
+[data-theme="light"] .system-message {
+  background-color: rgba(240, 242, 248, 0.8);
+  color: #4a4a6a;
+}
+
+[data-theme="light"] .feature-toggle {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #4a4a6a;
+}
+
+[data-theme="light"] .feature-toggle.active {
+  background-color: rgba(124, 93, 255, 0.1);
+  color: var(--gemini-primary);
+}
+
+[data-theme="light"] .sidebar {
+  background-color: rgba(248, 249, 252, 0.9);
+}
+
+[data-theme="light"] .history-item:hover {
+  background-color: rgba(124, 93, 255, 0.1);
+}
+
+[data-theme="light"] .history-item.active {
+  background-color: rgba(124, 93, 255, 0.15);
+}
+
+[data-theme="light"] .preloader {
+  background-color: #f8f9fc;
+}
+
+[data-theme="light"] .settings-container {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] .settings-sidebar {
+  border-right-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .settings-header {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .settings-section h3 {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .setting-item {
+  border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .toggle-switch label {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .toggle-switch label:before {
+  background-color: #ffffff;
+}
+
+[data-theme="light"] .shortcuts-list .shortcut-item {
+  background-color: #f0f2f8;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] kbd {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Message density */
+[data-density="compact"] .message-group {
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+
+[data-density="compact"] .message-text {
+  font-size: 0.95em;
+}
+
+[data-density="compact"] .message-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+[data-density="spacious"] .message-group {
+  padding: 24px 32px;
+  margin-bottom: 12px;
+}
+
+[data-density="spacious"] .message-text {
+  font-size: 1.05em;
+  line-height: 1.6;
+}
+
+[data-density="spacious"] .message-avatar {
+  width: 40px;
+  height: 40px;
+}
