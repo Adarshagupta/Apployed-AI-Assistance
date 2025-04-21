@@ -40,14 +40,45 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
     advancedReasoning: false,
     documentGeneration: false
   });
+  const [autoToggleEnabled, setAutoToggleEnabled] = useState(true); // Control whether features auto-toggle
   const [documentGeneratorVisible, setDocumentGeneratorVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState('');
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Smart scroll function that checks if user is already at the bottom
+  const scrollToBottom = (force = false) => {
+    if (!messagesContainerRef.current) return;
+
+    const container = messagesContainerRef.current;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+
+    // Only auto-scroll if user is already at the bottom or if forced
+    if ((shouldAutoScroll && isAtBottom) || force) {
+      messagesEndRef.current?.scrollIntoView({ behavior: isGenerating ? 'auto' : 'smooth' });
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
+
+  // Set up scroll listener to detect when user manually scrolls away
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+      setShouldAutoScroll(isAtBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Handle window resize for responsive layout
   useEffect(() => {
@@ -85,28 +116,57 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
   // Toggle features on/off
   const handleToggleFeature = (featureKey) => {
-    setFeatures(prev => {
-      const newFeatures = { ...prev, [featureKey]: !prev[featureKey] };
+    // First check if the feature exists in our features object
+    if (!(featureKey in features)) {
+      console.warn(`Unknown feature key: ${featureKey}`);
+      return;
+    }
 
-      // Add a system message when a feature is toggled
-      const action = newFeatures[featureKey] ? 'enabled' : 'disabled';
-      const featureNames = {
-        webSearch: 'Web Search',
-        documentAnalysis: 'Document Analysis',
-        imageUnderstanding: 'Image Understanding',
-        advancedReasoning: 'Advanced Reasoning'
-      };
+    // Get the new state before updating
+    const newValue = !features[featureKey];
 
-      const systemMessage = {
-        id: Date.now(),
-        text: `${featureNames[featureKey]} ${action}.`,
-        sender: 'system',
-        timestamp: new Date().toISOString(),
-      };
+    // Update the features state
+    setFeatures(prev => ({
+      ...prev,
+      [featureKey]: newValue
+    }));
 
-      setMessages(prevMessages => [...prevMessages, systemMessage]);
-      return newFeatures;
-    });
+    // Add a system message when a feature is toggled
+    const action = newValue ? 'enabled' : 'disabled';
+    const featureNames = {
+      webSearch: 'Web Search',
+      documentAnalysis: 'Document Analysis',
+      imageUnderstanding: 'Image Understanding',
+      advancedReasoning: 'Advanced Reasoning',
+      documentGeneration: 'Document Generation'
+    };
+
+    // Make sure we have a name for this feature
+    const featureName = featureNames[featureKey] || featureKey;
+
+    const systemMessage = {
+      id: Date.now(),
+      text: `${featureName} ${action}.`,
+      sender: 'system',
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages(prevMessages => [...prevMessages, systemMessage]);
+  };
+
+  // Toggle auto-toggle feature on/off
+  const handleToggleAutoFeature = (newValue) => {
+    setAutoToggleEnabled(newValue);
+
+    // Add a system message about the auto-toggle setting change
+    const systemMessage = {
+      id: Date.now(),
+      text: `Automatic feature toggling ${newValue ? 'enabled' : 'disabled'}.`,
+      sender: 'system',
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages(prevMessages => [...prevMessages, systemMessage]);
   };
 
   // Detect if a message is likely a search query
@@ -297,6 +357,10 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsLoading(true);
+    setIsGenerating(true);
+
+    // Force scroll to bottom when user sends a message
+    setTimeout(() => scrollToBottom(true), 100);
 
     try {
       // Prepare message with active features information
@@ -309,8 +373,8 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
       let autoEnabledSearch = false;
       let autoEnabledReasoning = false;
 
-      // Auto-enable web search for search-like queries
-      if (!features.webSearch && isSearchQuery(message)) {
+      // Auto-enable web search for search-like queries if auto-toggle is enabled
+      if (autoToggleEnabled && !features.webSearch && isSearchQuery(message)) {
         // Automatically enable web search
         setFeatures(prev => ({ ...prev, webSearch: true }));
         autoEnabledSearch = true;
@@ -329,7 +393,7 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
       // Check if this is an image upload - if so, don't auto-enable advanced reasoning
       const isImageUpload = uploadedFile && uploadedFile.type.includes('image');
 
-      if (!features.advancedReasoning && isReasoningQuery(message) && !isImageUpload) {
+      if (autoToggleEnabled && !features.advancedReasoning && isReasoningQuery(message) && !isImageUpload) {
         // Automatically enable advanced reasoning
         setFeatures(prev => ({ ...prev, advancedReasoning: true }));
         autoEnabledReasoning = true;
@@ -346,7 +410,7 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
       // Auto-enable document generation for document requests
       let autoEnabledDocGen = false;
-      if (!features.documentGeneration && isDocumentGenerationQuery(message)) {
+      if (autoToggleEnabled && !features.documentGeneration && isDocumentGenerationQuery(message)) {
         // Automatically enable document generation
         setFeatures(prev => ({ ...prev, documentGeneration: true }));
         autoEnabledDocGen = true;
@@ -387,6 +451,10 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
           setMessages((prevMessages) => [...prevMessages, githubMessage]);
           setIsLoading(false);
+          setIsGenerating(false);
+
+          // Force scroll to bottom after GitHub response is complete
+          setTimeout(() => scrollToBottom(true), 200);
 
           // Skip the regular text processing since we've already handled the GitHub command
           return;
@@ -428,6 +496,10 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
           setMessages((prevMessages) => [...prevMessages, databaseMessage]);
           setIsLoading(false);
+          setIsGenerating(false);
+
+          // Force scroll to bottom after database response is complete
+          setTimeout(() => scrollToBottom(true), 200);
 
           // Skip the regular text processing since we've already handled the database command
           return;
@@ -521,7 +593,7 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
         const isImage = uploadedFile.type.includes('image');
 
         // Auto-enable image understanding or document analysis based on file type
-        if (isImage && !features.imageUnderstanding) {
+        if (autoToggleEnabled && isImage && !features.imageUnderstanding) {
           // Auto-enable image understanding
           setFeatures(prev => ({ ...prev, imageUnderstanding: true }));
 
@@ -542,7 +614,7 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
             timestamp: new Date().toISOString(),
           };
           setMessages((prevMessages) => [...prevMessages, directAnswerMessage]);
-        } else if (!isImage && !features.documentAnalysis) {
+        } else if (autoToggleEnabled && !isImage && !features.documentAnalysis) {
           // Auto-enable document analysis
           setFeatures(prev => ({ ...prev, documentAnalysis: true }));
 
@@ -629,6 +701,10 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
               setMessages((prevMessages) => [...prevMessages, apploydMessage]);
               setIsLoading(false);
+              setIsGenerating(false);
+
+              // Force scroll to bottom after image response is complete
+              setTimeout(() => scrollToBottom(true), 200);
 
               // Skip the regular text processing since we've already handled the image
               return;
@@ -685,15 +761,23 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
       setMessages((prevMessages) => [...prevMessages, apploydMessage]);
       let currentText = '';
       let messageId = apploydMessage.id;
+
+      // Force scroll to bottom when AI starts responding
+      setTimeout(() => scrollToBottom(true), 100);
+
       for await (const partial of streamChatResponse(enhancedMessage, history)) {
         currentText = partial;
         setMessages((prevMessages) => prevMessages.map(msg =>
           msg.id === messageId ? { ...msg, text: currentText } : msg
         ));
 
+        // Scroll to bottom during streaming if user is at the bottom
+        scrollToBottom();
+
         // Check if the response indicates uncertainty and we should trigger web search
         // Only check once we have enough text to analyze (at least 100 characters)
         if (currentText.length > 100 &&
+            autoToggleEnabled &&
             !features.webSearch &&
             !autoEnabledSearch &&
             detectUncertainty(currentText)) {
@@ -765,11 +849,18 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
               // Stream the new response
               let newCurrentText = '';
               let newMessageId = newApploydMessage.id;
+
+              // Force scroll to bottom for the new response
+              setTimeout(() => scrollToBottom(true), 100);
+
               for await (const newPartial of streamChatResponse(newEnhancedMessage, [])) {
                 newCurrentText = newPartial;
                 setMessages((prevMessages) => prevMessages.map(msg =>
                   msg.id === newMessageId ? { ...msg, text: newCurrentText } : msg
                 ));
+
+                // Scroll to bottom during streaming if user is at the bottom
+                scrollToBottom();
               }
 
               // Update the current text to the new response
@@ -858,13 +949,17 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
     } finally {
       setIsLoading(false);
+      setIsGenerating(false);
+
+      // Final scroll to bottom after response is complete
+      setTimeout(() => scrollToBottom(), 200);
     }
   };
 
 
 
   return (
-    <div className="main-container">
+    <div className="main-container chat-interface">
       {/* Mobile sidebar toggle button */}
       <button className="sidebar-toggle" onClick={toggleSidebar}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -888,8 +983,13 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
 
       <div className="chat-container">
         <ApiKeyStatus />
-        <FeatureToggles features={features} onToggle={handleToggleFeature} />
-        <MessageList messages={messages} />
+        <FeatureToggles
+          features={features}
+          onToggle={handleToggleFeature}
+          autoToggleEnabled={autoToggleEnabled}
+          onAutoToggleChange={handleToggleAutoFeature}
+        />
+        <MessageList messages={messages} ref={messagesContainerRef} />
         <div ref={messagesEndRef} />
         <UserInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>

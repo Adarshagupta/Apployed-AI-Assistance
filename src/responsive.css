@@ -169,7 +169,7 @@
 }
 
 .message-group.user {
-  background-color: rgba(124, 93, 255, 0.1);
+  color: white;
 }
 
 .message-group.ai {
@@ -625,7 +625,7 @@
 
   /* Feature toggles for small mobile */
   .feature-toggles-container {
-    padding-left: 50px; /* More space for the sidebar toggle */
+    padding-left: 35%; /* More space for the sidebar toggle */
   }
 
   .feature-toggle {

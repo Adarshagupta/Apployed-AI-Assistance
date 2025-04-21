@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  password       String
+  name           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  isActive       Boolean   @default(true)
+  lastLogin      DateTime?
+  profilePicture String?
+  preferences    Json? // Store user preferences as JSON
+
+  // Relations
+  documents         Document[]
+  conversations     Conversation[]
+  memories          Memory[]
+  sharedDocuments   SharedDocument[] @relation("SharedBy")
+  receivedDocuments SharedDocument[] @relation("SharedWith")
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+
+  // Relations
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares SharedDocument[]
+
+  @@index([userId])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+
+  // Relations
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+  memories Memory[]
+
+  @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  sender    String // 'user' or 'assistant'
+  createdAt DateTime @default(now())
+  isError   Boolean  @default(false)
+
+  // Relations
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+model Memory {
+  id           String    @id @default(uuid())
+  content      String    @db.Text
+  importance   Int       @default(1) // 1-5 scale
+  createdAt    DateTime  @default(now())
+  lastAccessed DateTime?
+  accessCount  Int       @default(0)
+
+  // Relations
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model SharedDocument {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  accessCount  Int       @default(0)
+  lastAccessed DateTime?
+  permissions  String    @default("read") // read, comment, edit
+
+  // Relations
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sharedById     String
+  sharedBy       User     @relation("SharedBy", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedWithId   String?
+  sharedWith     User?    @relation("SharedWith", fields: [sharedWithId], references: [id], onDelete: SetNull)
+  sharedViaEmail String?
+
+  @@index([documentId])
+  @@index([sharedById])
+  @@index([sharedWithId])
+}

@@ -1,0 +1,147 @@
+/* User Menu Styles */
+
+.user-menu-container {
+  position: relative;
+}
+
+.user-menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gemini-primary-light);
+  transition: all 0.2s ease;
+}
+
+.user-avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gemini-primary-light), var(--gemini-primary));
+  color: var(--gemini-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.user-menu-button:hover .user-avatar,
+.user-menu-button:hover .user-avatar-initials {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px rgba(124, 93, 255, 0.3);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: rgba(31, 29, 43, 0.95);
+  border: 1px solid var(--gemini-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 220px;
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.user-info {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--gemini-text);
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.user-email {
+  color: var(--gemini-text-secondary);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.05);
+  margin: 4px 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--gemini-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.menu-item:hover {
+  background-color: rgba(124, 93, 255, 0.1);
+  color: var(--gemini-text);
+}
+
+.logout-item {
+  color: #ff6b6b;
+}
+
+.logout-item:hover {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-dropdown-menu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}

@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import MessageGroup from './MessageGroup';
 
-const MessageList = ({ messages }) => {
+const MessageList = forwardRef(({ messages }, ref) => {
   return (
-    <div className="messages">
+    <div className="messages" ref={ref}>
       {messages.map((message) => (
         <MessageGroup key={message.id} message={message} />
       ))}
     </div>
   );
-};
+});
 
 export default MessageList;

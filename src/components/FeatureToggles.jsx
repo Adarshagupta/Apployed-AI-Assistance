@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const FeatureToggles = ({ features, onToggle }) => {
+const FeatureToggles = ({ features, onToggle, autoToggleEnabled, onAutoToggleChange }) => {
   // Track which features were auto-enabled
   const [autoEnabled, setAutoEnabled] = useState({
     webSearch: false,
@@ -12,23 +12,28 @@ const FeatureToggles = ({ features, onToggle }) => {
 
   // Check for newly auto-enabled features
   useEffect(() => {
+    // Create a new state object instead of multiple state updates
+    const newAutoEnabled = { ...autoEnabled };
+    let hasChanges = false;
+
     Object.keys(features).forEach(key => {
       if (features[key] && !autoEnabled[key]) {
         // This feature was enabled but we didn't track it as auto-enabled yet
         // This means it was either manually toggled or auto-enabled
-        setAutoEnabled(prev => ({
-          ...prev,
-          [key]: true
-        }));
-      } else if (!features[key]) {
+        newAutoEnabled[key] = true;
+        hasChanges = true;
+      } else if (!features[key] && autoEnabled[key]) {
         // Feature was turned off, reset auto-enabled state
-        setAutoEnabled(prev => ({
-          ...prev,
-          [key]: false
-        }));
+        newAutoEnabled[key] = false;
+        hasChanges = true;
       }
     });
-  }, [features]);
+
+    // Only update state if there are actual changes
+    if (hasChanges) {
+      setAutoEnabled(newAutoEnabled);
+    }
+  }, [features, autoEnabled]);
 
   // Handle manual toggle
   const handleToggle = (key) => {
@@ -43,6 +48,17 @@ const FeatureToggles = ({ features, onToggle }) => {
   return (
     <div className="feature-toggles">
       <div className="feature-toggles-container">
+        <button
+          className={`feature-toggle auto-toggle ${autoToggleEnabled ? 'active' : ''}`}
+          onClick={() => onAutoToggleChange(!autoToggleEnabled)}
+          title="Auto-Toggle Features"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 9V5C14 3.89543 13.1046 3 12 3C10.8954 3 10 3.89543 10 5V9M14 9C14 10.1046 13.1046 11 12 11C10.8954 11 10 10.1046 10 9M14 9H19C19.5523 9 20 9.44772 20 10V20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V10C4 9.44772 4.44772 9 5 9H10"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="feature-label">{autoToggleEnabled ? 'Auto-Toggle On' : 'Auto-Toggle Off'}</span>
+        </button>
         <button
           className={`feature-toggle ${features.webSearch ? 'active' : ''} ${autoEnabled.webSearch && features.webSearch ? 'auto-enabled' : ''}`}
           onClick={() => handleToggle('webSearch')}
