@@ -1,10 +1,12 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import './styles.css'
 import './responsive.css'
 import './accessibility.css'
 import App from './App.jsx'
+import SharedDocument from './components/SharedDocument'
 import { preventPullToRefresh, preventDoubleTapZoom, isTouchDevice } from './utils/touchUtils'
 
 // Wrapper component to handle mobile touch optimizations
@@ -40,7 +42,14 @@ const AppWrapper = () => {
     };
   }, []);
 
-  return <App />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/shared-document" element={<SharedDocument />} />
+      </Routes>
+    </BrowserRouter>
+  );
 };
 
 createRoot(document.getElementById('root')).render(
