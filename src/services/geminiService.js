@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getSystemPrompt } from './systemPrompt';
 import { generateContextualSystemMessage, addMessageToConversation } from './memoryService';
+import { searchAndScrapeWeb } from './webSearchService';
 
 // Initialize the Google Generative AI with your API key
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -420,8 +421,13 @@ const postProcessImageResponse = (text) => {
   return processed;
 };
 
-// Function to detect if a model response indicates uncertainty
-export const detectUncertainty = (text) => {
+/**
+ * Detect if a model response indicates uncertainty or lack of information
+ * @param {string} text - The model's response text
+ * @param {string} query - The original user query
+ * @returns {Object} - Object containing uncertainty status and details
+ */
+export const detectUncertainty = (text, query = '') => {
   const uncertaintyPatterns = [
     /I don't have (enough|specific|detailed|current) information/i,
     /I don't have access to/i,
@@ -437,10 +443,203 @@ export const detectUncertainty = (text) => {
     /I (can't|cannot) (determine|verify|confirm|check)/i,
     /I'm not (familiar|updated|current) with/i,
     /that's (beyond|outside) (my|the scope of my)/i,
-    /I (don't|do not) have (real-time|current|up-to-date)/i
+    /I (don't|do not) have (real-time|current|up-to-date)/i,
+    /as of my (last update|training|knowledge cutoff)/i,
+    /I (don't|do not) have the ability to/i,
+    /I (don't|do not) have access to (real-time|current|up-to-date|the latest)/i,
+    /I (can't|cannot) browse the (internet|web)/i,
+    /I (can't|cannot) search the (internet|web|online)/i,
+    /my information (might be|may be|is|could be) outdated/i,
+    /for the most (current|up-to-date|recent) information/i,
+    /you (might|may) want to (check|verify|look up|search)/i,
+    /I (recommend|suggest) (checking|looking up|searching|visiting)/i
   ];
 
-  return uncertaintyPatterns.some(pattern => pattern.test(text));
+  // Check if any uncertainty pattern matches
+  const isUncertain = uncertaintyPatterns.some(pattern => pattern.test(text));
+
+  // Determine if the query is likely to benefit from web search/scraping
+  const needsWebData = isUncertain && isQueryWebSearchable(query);
+
+  return {
+    isUncertain,
+    needsWebData,
+    originalResponse: text
+  };
+};
+
+/**
+ * Determine if a query would benefit from web search/scraping
+ * @param {string} query - The user's query
+ * @returns {boolean} - Whether the query is web-searchable
+ */
+const isQueryWebSearchable = (query) => {
+  if (!query) return false;
+
+  // Queries that likely need current information
+  const currentInfoPatterns = [
+    /what is/i,
+    /who is/i,
+    /where is/i,
+    /when is/i,
+    /how (to|do|does|can)/i,
+    /latest/i,
+    /recent/i,
+    /current/i,
+    /news/i,
+    /update/i,
+    /today/i,
+    /yesterday/i,
+    /this (week|month|year)/i,
+    /happened/i,
+    /released/i,
+    /announced/i,
+    /published/i,
+    /launched/i,
+    /stock price/i,
+    /weather/i,
+    /score/i,
+    /result/i,
+    /election/i,
+    /price/i,
+    /cost/i,
+    /review/i,
+    /comparison/i,
+    /versus/i,
+    /vs/i,
+    /difference between/i
+  ];
+
+  return currentInfoPatterns.some(pattern => pattern.test(query));
+};
+
+/**
+ * Get information from the web when the model is uncertain
+ * @param {string} query - The user's query
+ * @param {string} modelResponse - The model's initial response
+ * @returns {Promise<string>} - Enhanced response with web information
+ */
+export const getWebInformationForUncertainty = async (query, modelResponse) => {
+  try {
+    console.log('Getting web information for uncertain response:', query);
+
+    // Search and scrape the web for information
+    const webData = await searchAndScrapeWeb(query);
+
+    if (!webData || !webData.scrapedData || !webData.scrapedData.combinedResults) {
+      console.log('No useful web data found');
+      return modelResponse;
+    }
+
+    // Extract the most relevant information from scraped data
+    const relevantInfo = extractRelevantInformation(webData, query);
+
+    if (!relevantInfo) {
+      console.log('No relevant information extracted from web data');
+      return modelResponse;
+    }
+
+    // Generate a new response with the web information
+    const enhancedResponse = await generateResponseWithWebInfo(query, relevantInfo, modelResponse);
+
+    return enhancedResponse;
+  } catch (error) {
+    console.error('Error getting web information:', error);
+    return modelResponse; // Fall back to the original response
+  }
+};
+
+/**
+ * Extract relevant information from scraped web data
+ * @param {Object} webData - The scraped web data
+ * @param {string} query - The user's query
+ * @returns {string} - Extracted relevant information
+ */
+const extractRelevantInformation = (webData, query) => {
+  try {
+    const { combinedResults } = webData.scrapedData;
+
+    // Combine information from all results
+    let relevantInfo = '';
+
+    // Add search result metadata
+    relevantInfo += 'Web search results:\n';
+
+    // Process each result
+    combinedResults.forEach((result, index) => {
+      // Add basic search result info
+      relevantInfo += `${index + 1}. ${result.title}\n`;
+      relevantInfo += `   Source: ${result.source}\n`;
+      relevantInfo += `   URL: ${result.link}\n`;
+
+      // Add snippet
+      if (result.snippet) {
+        relevantInfo += `   ${result.snippet}\n`;
+      }
+
+      // Add a sample of scraped content if available (limited to avoid token limits)
+      if (result.scrapedContent) {
+        const contentSample = result.scrapedContent.substring(0, 500) +
+          (result.scrapedContent.length > 500 ? '...' : '');
+        relevantInfo += `   Content: ${contentSample}\n`;
+      }
+
+      relevantInfo += '\n';
+    });
+
+    // Add the original query
+    relevantInfo += `\n[User query]\n${query}`;
+
+    return relevantInfo;
+  } catch (error) {
+    console.error('Error extracting relevant information:', error);
+    return null;
+  }
+};
+
+/**
+ * Generate a new response using web information
+ * @param {string} query - The user's query
+ * @param {string} webInfo - The web information
+ * @param {string} originalResponse - The model's original response
+ * @returns {Promise<string>} - Enhanced response
+ */
+const generateResponseWithWebInfo = async (query, webInfo, originalResponse) => {
+  try {
+    // Create a prompt that instructs the model to use the web information
+    const prompt = `${webInfo}\n\nUsing ONLY the web search results above, provide a comprehensive answer to the user's query. Do not mention that you're using search results in your answer. If the search results don't contain relevant information, acknowledge that you don't have enough information to answer accurately.`;
+
+    // Generate a new response
+    const result = await model.generateContent({
+      contents: [
+        { role: 'user', parts: [{ text: prompt }] }
+      ],
+      generationConfig: {
+        temperature: 0.3, // Lower temperature for more factual responses
+        topP: 0.8,
+        topK: 40,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      ],
+    });
+
+    const enhancedResponse = result.response.text();
+
+    // If the enhanced response is still uncertain, fall back to the original
+    if (detectUncertainty(enhancedResponse).isUncertain) {
+      console.log('Enhanced response still uncertain, falling back to original');
+      return originalResponse;
+    }
+
+    return enhancedResponse;
+  } catch (error) {
+    console.error('Error generating response with web info:', error);
+    return originalResponse; // Fall back to the original response
+  }
 };
 
 // Function to generate content for the document editor
@@ -477,5 +676,6 @@ export default {
   streamChatResponse,
   processImageWithGemini,
   detectUncertainty,
+  getWebInformationForUncertainty,
   generateContent
 };

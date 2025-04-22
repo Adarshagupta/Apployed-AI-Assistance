@@ -5,8 +5,9 @@ import ApiKeyStatus from './ApiKeyStatus';
 import Sidebar from './Sidebar';
 import FeatureToggles from './FeatureToggles';
 import DocumentGenerator from './DocumentGenerator';
-import { generateChatResponse, streamChatResponse, processImageWithGemini, detectUncertainty } from '../services/geminiService';
-import { performWebSearch } from '../services/webSearchService';
+import { generateChatResponse, streamChatResponse, processImageWithGemini, detectUncertainty, getWebInformationForUncertainty } from '../services/geminiService';
+import { performWebSearch, searchAndScrapeWeb, hasSerpApiKey } from '../services/webSearchService';
+import { directScrapeUrl } from '../services/webScrapingService';
 import { suggestDocumentFormat } from '../services/documentService';
 import { processGitHubCommand, isGitHubAuthenticated } from '../services/githubService';
 import { processDatabaseCommand, isDatabaseConnected } from '../services/databaseService';
@@ -38,7 +39,8 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
     documentAnalysis: false,
     imageUnderstanding: false,
     advancedReasoning: false,
-    documentGeneration: false
+    documentGeneration: false,
+    webScraping: false
   });
   const [autoToggleEnabled, setAutoToggleEnabled] = useState(true); // Control whether features auto-toggle
   const [documentGeneratorVisible, setDocumentGeneratorVisible] = useState(false);
@@ -283,6 +285,57 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
     return documentPatterns.some(pattern => pattern.test(text));
   };
 
+  // Detect if a message is a direct scraping request
+  const isScrapingRequest = (text) => {
+    // Check for patterns that suggest direct scraping requests
+    const scrapingPatterns = [
+      /^scrape (https?:\/\/)?[\w\.-]+\.[a-z]{2,}(\S*)/i,
+      /^(get|fetch|extract) (content|data|info|information) from (https?:\/\/)?[\w\.-]+\.[a-z]{2,}(\S*)/i,
+      /^(web ?scrape|scrape website) (https?:\/\/)?[\w\.-]+\.[a-z]{2,}(\S*)/i,
+      /^(https?:\/\/)?[\w\.-]+\.[a-z]{2,}(\S*) scrape it/i
+    ];
+
+    return scrapingPatterns.some(pattern => pattern.test(text));
+  };
+
+  // Extract URL from a scraping request
+  const extractUrlFromScrapingRequest = (text) => {
+    // Different patterns to extract URLs
+    const patterns = [
+      // Match "scrape example.com" or "scrape https://example.com"
+      /scrape (https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*)/i,
+      // Match "get content from example.com"
+      /(get|fetch|extract) (content|data|info|information) from (https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*)/i,
+      // Match "web scrape example.com"
+      /(web ?scrape|scrape website) (https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*)/i,
+      // Match "example.com scrape it"
+      /(https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*) scrape it/i,
+      // Simple URL pattern as fallback
+      /(https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*)/i
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        // If the pattern has capture groups for protocol and domain
+        if (match[1] && match[1].startsWith('http')) {
+          return match[1] + match[2]; // Full URL with protocol
+        } else if (match[3] && match[3].startsWith('http')) {
+          return match[3] + match[4]; // Full URL with protocol
+        } else if (match[1] === undefined && match[2]) {
+          return match[2]; // Just the domain
+        } else if (match[3] === undefined && match[4]) {
+          return match[4]; // Just the domain
+        } else {
+          // Find any URL-like string in the text
+          const urlMatch = text.match(/(https?:\/\/)?([\w\.-]+\.[a-z]{2,}\S*)/i);
+          return urlMatch ? urlMatch[0] : null;
+        }
+      }
+    }
+    return null;
+  };
+
   // Detect if a message is a GitHub command
   const isGitHubCommand = (text) => {
     // Check if GitHub is authenticated first
@@ -423,6 +476,72 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
           timestamp: new Date().toISOString(),
         };
         setMessages((prevMessages) => [...prevMessages, autoEnableMessage]);
+      }
+
+      // Handle direct scraping requests
+      if (isScrapingRequest(message)) {
+        try {
+          // Extract the URL from the message
+          const url = extractUrlFromScrapingRequest(message);
+
+          if (!url) {
+            throw new Error('Could not extract a valid URL from the request');
+          }
+
+          // Add a system message indicating scraping is in progress
+          const scrapingMessage = {
+            id: Date.now() + 0.37,
+            text: `Scraping content from ${url}...`,
+            sender: 'system',
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prevMessages) => [...prevMessages, scrapingMessage]);
+
+          // Auto-enable web scraping feature
+          if (!features.webScraping) {
+            setFeatures(prev => ({ ...prev, webScraping: true }));
+
+            // Add system message about auto-enabling web scraping
+            const autoEnableMessage = {
+              id: Date.now() + 0.38,
+              text: `Web Scraping automatically enabled for this request.`,
+              sender: 'system',
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prevMessages) => [...prevMessages, autoEnableMessage]);
+          }
+
+          // Perform the scraping
+          const scrapedContent = await directScrapeUrl(url);
+
+          // Add the scraped content as a Apployd message
+          const scrapedMessage = {
+            id: Date.now() + 1,
+            text: scrapedContent,
+            sender: 'apployd',
+            timestamp: new Date().toISOString(),
+            isScrapedContent: true
+          };
+
+          setMessages((prevMessages) => [...prevMessages, scrapedMessage]);
+          setIsLoading(false);
+          setIsGenerating(false);
+
+          // Force scroll to bottom after scraping response is complete
+          setTimeout(() => scrollToBottom(true), 200);
+
+          // Skip the regular text processing since we've already handled the scraping request
+          return;
+        } catch (scrapingError) {
+          console.error('Error processing scraping request:', scrapingError);
+          const errorMessage = {
+            id: Date.now() + 0.39,
+            text: `Error scraping content: ${scrapingError.message}`,
+            sender: 'system',
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prevMessages) => [...prevMessages, errorMessage]);
+        }
       }
 
       // Handle GitHub commands
@@ -774,111 +893,162 @@ const ChatInterface = ({ onOpenSettings, onOpenDocumentEditor }) => {
         // Scroll to bottom during streaming if user is at the bottom
         scrollToBottom();
 
-        // Check if the response indicates uncertainty and we should trigger web search
+        // Check if the response indicates uncertainty and we should trigger web search or scraping
         // Only check once we have enough text to analyze (at least 100 characters)
-        if (currentText.length > 100 &&
-            autoToggleEnabled &&
-            !features.webSearch &&
-            !autoEnabledSearch &&
-            detectUncertainty(currentText)) {
+        if (currentText.length > 100 && autoToggleEnabled) {
+          // Check for uncertainty in the response
+          const uncertaintyCheck = detectUncertainty(currentText, message);
 
-          // Add system message about auto-enabling search due to uncertainty
-          const autoEnableMessage = {
-            id: Date.now() + 0.31,
-            text: `Web Search automatically enabled due to uncertainty in the response.`,
-            sender: 'system',
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prevMessages) => [...prevMessages, autoEnableMessage]);
+          if (uncertaintyCheck.isUncertain) {
+            // Determine if we should use web search or web scraping
+            const shouldUseWebSearch = !features.webSearch && !autoEnabledSearch;
+            const shouldUseWebScraping = !features.webScraping && uncertaintyCheck.needsWebData;
 
-          // Perform web search
-          try {
-            // Add a system message indicating search is in progress
-            const searchingMessage = {
-              id: Date.now() + 0.51,
-              text: `Searching the web for: "${message}"...`,
-              sender: 'system',
-              timestamp: new Date().toISOString(),
-            };
-            setMessages((prevMessages) => [...prevMessages, searchingMessage]);
-
-            // Perform the web search
-            const searchResults = await performWebSearch(message);
-
-            // Format search results for display
-            if (searchResults && searchResults.length > 0) {
-              const searchResultsText = formatSearchResults(searchResults);
-
-              // Add search results as a system message
-              const isMissingApiKey = searchResults[0]?.title?.includes('API Key Missing');
-
-              const resultsMessage = {
-                id: Date.now() + 0.71,
-                text: isMissingApiKey
-                  ? `⚠️ Using mock search results. To enable real web search, add a SerpApi key to your .env file.`
-                  : `Found ${searchResults.length} results for "${message}"`,
+            if (shouldUseWebSearch || shouldUseWebScraping) {
+              // Add system message about auto-enabling search/scraping due to uncertainty
+              const featureToEnable = shouldUseWebScraping ? 'Web Scraping' : 'Web Search';
+              const autoEnableMessage = {
+                id: Date.now() + 0.31,
+                text: `${featureToEnable} automatically enabled due to uncertainty in the response.`,
                 sender: 'system',
                 timestamp: new Date().toISOString(),
               };
-              setMessages((prevMessages) => [...prevMessages, resultsMessage]);
+              setMessages((prevMessages) => [...prevMessages, autoEnableMessage]);
 
-              // Create a new enhanced message with search results
-              const newEnhancedMessage = `[Web search results]\n${searchResultsText}\n\n[User query]\n${message}\n\nYou MUST answer the query using ONLY the information from the web search results above. Be direct and concise. Do not mention that you're using search results.`;
-
-              // Add a system message about generating a new response
-              const regeneratingMessage = {
-                id: Date.now() + 0.72,
-                text: `Generating a new response with web search results...`,
-                sender: 'system',
-                timestamp: new Date().toISOString(),
-              };
-              setMessages((prevMessages) => [...prevMessages, regeneratingMessage]);
-
-              // Remove the current incomplete message
-              setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== messageId));
-
-              // Create a new message for the improved response
-              const newApploydMessage = {
-                id: Date.now() + 2,
-                text: '',
-                sender: 'apployd',
-                timestamp: new Date().toISOString(),
-              };
-              setMessages((prevMessages) => [...prevMessages, newApploydMessage]);
-
-              // Stream the new response
-              let newCurrentText = '';
-              let newMessageId = newApploydMessage.id;
-
-              // Force scroll to bottom for the new response
-              setTimeout(() => scrollToBottom(true), 100);
-
-              for await (const newPartial of streamChatResponse(newEnhancedMessage, [])) {
-                newCurrentText = newPartial;
-                setMessages((prevMessages) => prevMessages.map(msg =>
-                  msg.id === newMessageId ? { ...msg, text: newCurrentText } : msg
-                ));
-
-                // Scroll to bottom during streaming if user is at the bottom
-                scrollToBottom();
+              // Update features state
+              if (shouldUseWebScraping) {
+                setFeatures(prev => ({ ...prev, webScraping: true }));
+              } else if (shouldUseWebSearch) {
+                setFeatures(prev => ({ ...prev, webSearch: true }));
               }
 
-              // Update the current text to the new response
-              currentText = newCurrentText;
-              messageId = newMessageId;
+              try {
+                // Add a system message indicating web search/scraping is in progress
+                const searchingMessage = {
+                  id: Date.now() + 0.51,
+                  text: `Searching the web for: "${message}"...`,
+                  sender: 'system',
+                  timestamp: new Date().toISOString(),
+                };
+                setMessages((prevMessages) => [...prevMessages, searchingMessage]);
 
-              // Break out of the original streaming loop
-              break;
+                if (shouldUseWebScraping) {
+                  // Add a system message about web scraping
+                  const scrapingMessage = {
+                    id: Date.now() + 0.52,
+                    text: `Scraping web content for more detailed information...`,
+                    sender: 'system',
+                    timestamp: new Date().toISOString(),
+                  };
+                  setMessages((prevMessages) => [...prevMessages, scrapingMessage]);
+
+                  // Get enhanced response with web information
+                  const enhancedResponse = await getWebInformationForUncertainty(message, currentText);
+
+                  // Remove the current incomplete message
+                  setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== messageId));
+
+                  // Create a new message for the improved response
+                  const newApploydMessage = {
+                    id: Date.now() + 2,
+                    text: enhancedResponse,
+                    sender: 'apployd',
+                    timestamp: new Date().toISOString(),
+                    usedWebScraping: true
+                  };
+                  setMessages((prevMessages) => [...prevMessages, newApploydMessage]);
+
+                  // Update the current text to the new response
+                  currentText = enhancedResponse;
+                  messageId = newApploydMessage.id;
+
+                  // Force scroll to bottom for the new response
+                  setTimeout(() => scrollToBottom(true), 100);
+
+                  // Break out of the original streaming loop
+                  break;
+                } else {
+                  // Perform regular web search
+                  const searchResults = await performWebSearch(message);
+
+                  // Format search results for display
+                  if (searchResults && searchResults.length > 0) {
+                    const searchResultsText = formatSearchResults(searchResults);
+
+                    // Add search results as a system message
+                    const isMissingApiKey = !hasSerpApiKey();
+
+                    const resultsMessage = {
+                      id: Date.now() + 0.71,
+                      text: isMissingApiKey
+                        ? `⚠️ Using mock search results. To enable real web search, add a SerpApi key to your .env file.`
+                        : `Found ${searchResults.length} results for "${message}"`,
+                      sender: 'system',
+                      timestamp: new Date().toISOString(),
+                    };
+                    setMessages((prevMessages) => [...prevMessages, resultsMessage]);
+
+                    // Create a new enhanced message with search results
+                    const newEnhancedMessage = `[Web search results]\n${searchResultsText}\n\n[User query]\n${message}\n\nYou MUST answer the query using ONLY the information from the web search results above. Be direct and concise. Do not mention that you're using search results.`;
+
+                    // Add a system message about generating a new response
+                    const regeneratingMessage = {
+                      id: Date.now() + 0.72,
+                      text: `Generating a new response with web search results...`,
+                      sender: 'system',
+                      timestamp: new Date().toISOString(),
+                    };
+                    setMessages((prevMessages) => [...prevMessages, regeneratingMessage]);
+
+                    // Remove the current incomplete message
+                    setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== messageId));
+
+                    // Create a new message for the improved response
+                    const newApploydMessage = {
+                      id: Date.now() + 2,
+                      text: '',
+                      sender: 'apployd',
+                      timestamp: new Date().toISOString(),
+                      usedWebSearch: true
+                    };
+                    setMessages((prevMessages) => [...prevMessages, newApploydMessage]);
+
+                    // Stream the new response
+                    let newCurrentText = '';
+                    let newMessageId = newApploydMessage.id;
+
+                    // Force scroll to bottom for the new response
+                    setTimeout(() => scrollToBottom(true), 100);
+
+                    for await (const newPartial of streamChatResponse(newEnhancedMessage, [])) {
+                      newCurrentText = newPartial;
+                      setMessages((prevMessages) => prevMessages.map(msg =>
+                        msg.id === newMessageId ? { ...msg, text: newCurrentText } : msg
+                      ));
+
+                      // Scroll to bottom during streaming if user is at the bottom
+                      scrollToBottom();
+                    }
+
+                    // Update the current text to the new response
+                    currentText = newCurrentText;
+                    messageId = newMessageId;
+
+                    // Break out of the original streaming loop
+                    break;
+                  }
+                }
+              } catch (error) {
+                console.error('Web search/scraping error during uncertainty handling:', error);
+                const errorMessage = {
+                  id: Date.now() + 0.61,
+                  text: `Error searching/scraping the web: ${error.message}`,
+                  sender: 'system',
+                  timestamp: new Date().toISOString(),
+                };
+                setMessages((prevMessages) => [...prevMessages, errorMessage]);
+              }
             }
-          } catch (searchError) {
-            console.error('Web search error during uncertainty handling:', searchError);
-            const errorMessage = {
-              id: Date.now() + 0.61,
-              text: `Error searching the web: ${searchError.message}`,
-              sender: 'system',
-              timestamp: new Date().toISOString(),
-            };
-            setMessages((prevMessages) => [...prevMessages, errorMessage]);
           }
         }
       }

@@ -7,7 +7,8 @@ const FeatureToggles = ({ features, onToggle, autoToggleEnabled, onAutoToggleCha
     documentAnalysis: false,
     imageUnderstanding: false,
     advancedReasoning: false,
-    documentGeneration: false
+    documentGeneration: false,
+    webScraping: false
   });
 
   // Check for newly auto-enabled features
@@ -122,6 +123,18 @@ const FeatureToggles = ({ features, onToggle, autoToggleEnabled, onAutoToggleCha
           </svg>
           <span className="feature-label">Document Generation</span>
           {autoEnabled.documentGeneration && features.documentGeneration && <span className="auto-badge">Auto</span>}
+        </button>
+
+        <button
+          className={`feature-toggle ${features.webScraping ? 'active' : ''} ${autoEnabled.webScraping && features.webScraping ? 'auto-enabled' : ''}`}
+          onClick={() => handleToggle('webScraping')}
+          title="Web Scraping"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 10L21 3M21 3H15M21 3V9M7 9H4.6C4.03995 9 3.75992 9 3.54601 9.10899C3.35785 9.20487 3.20487 9.35785 3.10899 9.54601C3 9.75992 3 10.0399 3 10.6V19.4C3 19.9601 3 20.2401 3.10899 20.454C3.20487 20.6422 3.35785 20.7951 3.54601 20.891C3.75992 21 4.03995 21 4.6 21H19.4C19.9601 21 20.2401 21 20.454 20.891C20.6422 20.7951 20.7951 20.6422 20.891 20.454C21 20.2401 21 19.9601 21 19.4V17M10.5 13.5C10.5 14.8807 9.38071 16 8 16C6.61929 16 5.5 14.8807 5.5 13.5C5.5 12.1193 6.61929 11 8 11C9.38071 11 10.5 12.1193 10.5 13.5ZM18.5 7.5C18.5 8.88071 17.3807 10 16 10C14.6193 10 13.5 8.88071 13.5 7.5C13.5 6.11929 14.6193 5 16 5C17.3807 5 18.5 6.11929 18.5 7.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="feature-label">Web Scraping</span>
+          {autoEnabled.webScraping && features.webScraping && <span className="auto-badge">Auto</span>}
         </button>
       </div>
     </div>
