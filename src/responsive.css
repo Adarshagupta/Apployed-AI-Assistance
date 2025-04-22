@@ -404,7 +404,7 @@
   .sidebar-toggle {
     display: flex;
     position: fixed;
-    top: 10px;
+    top: 60px; /* Increased to avoid overlap with browser UI */
     left: 10px;
     z-index: 110;
     background-color: rgba(31, 29, 43, 0.7);
@@ -446,7 +446,7 @@
   .chat-container {
     width: 100%;
     margin-left: 0;
-    padding-top: 10px;
+    padding-top: 60px; /* Increased to ensure content is visible below browser UI */
   }
 
   .messages, .input-container {
@@ -458,11 +458,16 @@
     padding: 8px 8px;
     overflow-x: auto;
     justify-content: flex-start;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
   }
 
   .feature-toggles-container {
     justify-content: flex-start;
-    padding-left: 40px; /* Space for the sidebar toggle */
+    padding-left: 60px; /* Increased space for the sidebar toggle */
   }
 
   .feature-toggle {
@@ -525,6 +530,11 @@
   .memory-panel-toggle svg {
     width: 16px;
     height: 16px;
+  }
+
+  /* Fix message visibility */
+  .messages {
+    padding-top: 70px; /* Ensure messages appear below the feature toggles */
   }
 }
 
@@ -609,7 +619,7 @@
   }
 
   .messages {
-    padding: 16px 12px 80px; /* Add bottom padding for input field */
+    padding: 70px 12px 80px; /* Increased top padding to ensure visibility */
   }
 
   .input-container {
@@ -624,8 +634,12 @@
   }
 
   /* Feature toggles for small mobile */
+  .feature-toggles {
+    height: 50px; /* Fixed height for the feature toggles bar */
+  }
+
   .feature-toggles-container {
-    padding-left: 35%; /* More space for the sidebar toggle */
+    padding-left: 50px; /* More space for the sidebar toggle */
   }
 
   .feature-toggle {
@@ -636,6 +650,13 @@
   .feature-toggle svg {
     width: 14px;
     height: 14px;
+  }
+
+  /* Adjust sidebar toggle position */
+  .sidebar-toggle {
+    top: 5px; /* Position at the top of the screen */
+    left: 5px;
+    z-index: 60; /* Above feature toggles */
   }
 
   /* Memory panel mobile adjustments */
@@ -682,6 +703,11 @@
 
   th, td {
     padding: 6px 8px;
+  }
+
+  /* Fix chat container padding */
+  .chat-container {
+    padding-top: 0; /* Remove padding as we've added it to messages */
   }
 }
 
@@ -743,6 +769,22 @@
     white-space: nowrap;
     z-index: 10;
     margin-bottom: 4px;
+  }
+
+  /* Further adjust feature toggles */
+  .feature-toggles-container {
+    padding-left: 40px;
+  }
+
+  /* Ensure messages are visible */
+  .messages {
+    padding-top: 60px;
+  }
+
+  /* Make sidebar toggle smaller */
+  .sidebar-toggle {
+    width: 32px;
+    height: 32px;
   }
 }
 
